@@ -1,3 +1,4 @@
+// MainManager.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,21 +12,26 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
-    
     private bool m_GameOver = false;
 
-    
-    // Start is called before the first frame update
+    private int m_BestScore;
+    private string m_BestPlayerName;
+
     void Start()
     {
+        m_BestScore = PlayerPrefs.GetInt("BestScore", 0);
+        m_BestPlayerName = PlayerPrefs.GetString("BestPlayerName", "Unknown");
+        UpdateScoreUI();
+        UpdateBestScoreUI();
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
-        
-        int[] pointCountArray = new [] {1,1,2,2,5,5};
+        int[] pointCountArray = new[] { 1, 1, 2, 2, 5, 5 };
         for (int i = 0; i < LineCount; ++i)
         {
             for (int x = 0; x < perLine; ++x)
@@ -48,7 +54,6 @@ public class MainManager : MonoBehaviour
                 float randomDirection = Random.Range(-1.0f, 1.0f);
                 Vector3 forceDir = new Vector3(randomDirection, 1, 0);
                 forceDir.Normalize();
-
                 Ball.transform.SetParent(null);
                 Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
             }
@@ -57,7 +62,7 @@ public class MainManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                SceneManager.LoadScene(0); // Load the Menu scene (as suggested)
             }
         }
     }
@@ -65,7 +70,27 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        UpdateScoreUI();
+
+        if (m_Points > m_BestScore)
+        {
+            m_BestScore = m_Points;
+            m_BestPlayerName = GameData.PlayerName; // Updated to GameDataX
+            UpdateBestScoreUI();
+            PlayerPrefs.SetInt("BestScore", m_BestScore);
+            PlayerPrefs.SetString("BestPlayerName", m_BestPlayerName);
+            PlayerPrefs.Save();
+        }
+    }
+
+    void UpdateScoreUI()
+    {
+        ScoreText.text = $"Score: {m_Points}";
+    }
+
+    void UpdateBestScoreUI()
+    {
+        BestScoreText.text = $"Best Score: {m_BestPlayerName} - {m_BestScore}";
     }
 
     public void GameOver()
